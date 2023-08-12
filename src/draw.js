@@ -4,6 +4,8 @@
 // Render graphics
 function draw(fps, t) {
     
+    resetRand()
+    
     var ctx = global.ctx
     var canvas = global.canvas
     ctx.fillStyle = global.backgroundColor

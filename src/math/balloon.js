@@ -3,7 +3,7 @@ class Balloon{
         this.basePos = basePos
         this.pos = pos
         this.vel = v(0,0)
-        this.rad = randRange(.01,.1)
+        this.rad = randRange(.05,.1)
         
         this.a = this.rad
         this.b = randRange( 3e-3, 6e-3 )
@@ -28,6 +28,8 @@ class Balloon{
     update(dt){
         this.t += dt
         
+        //test
+        this.angleOffset += 1e-4*dt
         
         // avoid other balloons
         this.vel  = this.vel.mul(1-(3e-2*dt)) //apply friction
@@ -82,6 +84,15 @@ class Balloon{
     }
     
     draw(g){
+        
+        // debug 
+        // draw bezier points
+        var sp = this.getStemPoints()
+        if( false ){
+            g.fillStyle = 'red'
+            sp.forEach( p => g.fillRect(p.x,p.y,.003,.003) )
+        }
+        
         g.strokeStyle = 'black'
         g.lineWidth = .001
         g.beginPath()
@@ -91,10 +102,15 @@ class Balloon{
         //g.arc( this.pos.x, this.pos.y, this.rad, 0, twopi )
         
         // draw stem
-        var sp = this.pos.add(vp(pi,this.rad))// point where stem meets spiral
-        var end = va(this.basePos,sp,this.stemProgress/this.nStem)
         g.moveTo( this.basePos.x, this.basePos.y )
-        g.lineTo( end.x, end.y )
+        for( var i = 0 ; i < this.stemProgress ; i++ ){
+            var p = bezier(sp,i/this.nStem)
+            g.lineTo( p.x, p.y )
+        }
+        //var sp = this.pos.add(vp(pi,this.rad))// point where stem meets spiral
+        //var end = va(this.basePos,sp,this.stemProgress/this.nStem)
+        //g.moveTo( this.basePos.x, this.basePos.y )
+        //g.lineTo( end.x, end.y )
         
         // draw internal spiral
         if( this.spiral.length > 0 ){
@@ -106,8 +122,37 @@ class Balloon{
     }
     
     // used in draw()
+    // get bezier curve points defining stem shape
+    getStemPoints(){
+        var result = []
+        
+        // first point is base
+        result.push( this.basePos )
+        
+        // random point 
+        var maxy = this.basePos.y
+        var miny = this.pos.y-+this.rad
+        var r = maxy-miny
+        if ( r > 0 ){
+            result.push( v(
+                    this.basePos.x + randRange(-r,r),
+                    randRange(miny,maxy)))
+        }
+        
+        // last two points end up tangent to the spiral
+        var a = this.pos.add(vp(this.angleOffset+.5,this.rad))
+        var end = this.pos.add(vp(this.angleOffset,this.rad))
+        var angle = end.sub(a).getAngle()-.1
+        result.push( end.add( vp(angle,.1) ) )
+        result.push( end )
+        
+        return result
+    }
+    
+    // used in draw()
     getSpiralPos(i){        
-        var p = this.pos.add(vp(...this.spiral[i]))
+        var ar = this.spiral[i]
+        var p = this.pos.add(vp(ar[0]+this.angleOffset+pi,ar[1]))
         //var p = this.pos.add(this.spiral[i])
         
         return [p.x,p.y]
