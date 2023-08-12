@@ -20,3 +20,6 @@ function nnmod(a,b){
 function avg(a,b,r=.5){
     return (a*(1.0-r)) + (b*r)
 }
+function va(a,b,r=.5){
+    return v(avg(a.x,b.x,r),avg(a.y,b.y,r))
+}
