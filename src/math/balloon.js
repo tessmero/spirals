@@ -1,10 +1,26 @@
 class Balloon{
     constructor( basePos, pos, ){
+        
+        // base of setm
         this.basePos = basePos
+        
+        // spiral
         this.pos = pos
         this.vel = v(0,0)
+        this.angleOffset = randRange(0,twopi)
+        this.avel = 0
+        
+        // radius of sprial
         this.rad = randRange(.05,.1)
         
+        // settings for twisting behavior
+        // (regulate distance between stem and spiral)
+        this.stemSpace = null
+        this.lastStemSpace = null
+        this.targetStemSpace = this.rad*.9
+        this.targetStemSpaceMargin = this.rad*.05
+        
+        // spiral shape
         this.a = this.rad
         this.b = randRange( 3e-3, 6e-3 )
         this.stepDelay = 20
@@ -16,24 +32,33 @@ class Balloon{
         this.stemComplete = false
         this.spiralComplete = false
         
-        this.angleOffset = pi
-        this.angle = this.angleOffset
+        this.angle = pi
         this.t = 0
-    }
-    
-    stepDa(r){
-        return 2e-1*this.rad / r
     }
     
     update(dt){
         this.t += dt
         
-        //test
-        this.angleOffset += 1e-4*dt
+        // update pos
+        this.angleOffset += this.avel
+        this.pos = this.pos.add(this.vel.mul(dt))
+        
+        // apply friction
+        this.vel  = this.vel.mul(1-(3e-2*dt)) 
+        this.avel *= 1-(3e-4*dt)
+        
+        // twist towards natural angle
+        if( (this.stemComplete) && (this.stemSpace!=null) && (this.lastStemSpace!=null) ){
+            console.log( this.stemSpace.toFixed(3),   this.targetStemSpace.toFixed(3) )
+            var d = this.stemSpace - this.targetStemSpace
+            if( Math.abs(d) > this.targetStemSpaceMargin ){
+                this.avel += 4e-4*dt*d
+                this.vel = this.vel.add(vp(this.angleOffset-pio2,1e-4*dt*d))
+            }
+        }
+        
         
         // avoid other balloons
-        this.vel  = this.vel.mul(1-(3e-2*dt)) //apply friction
-        this.pos = this.pos.add(this.vel.mul(dt))
         global.balloons.forEach( o => {
             var d = o.pos.sub(this.pos)
             var d2 = d.getD2()
@@ -68,14 +93,14 @@ class Balloon{
     }
     
     growSpiralOneStep(){
-        var r = this.a - (this.angle-this.angleOffset)*this.b
+        var r = this.a - (this.angle-pi)*this.b
         
         if( r < .01 ){
             this.spiralComplete = true
             return
         }
         
-        this.angle += this.stepDa(r)
+        this.angle += 2e-1*this.rad / r
         
         //var next = vp( this.angle,  r )
         var next = [this.angle,r]
@@ -103,10 +128,15 @@ class Balloon{
         
         // draw stem
         g.moveTo( this.basePos.x, this.basePos.y )
+        var minD2 = 999
         for( var i = 0 ; i < this.stemProgress ; i++ ){
             var p = bezier(sp,i/this.nStem)
+            var d2 = p.sub(this.pos).getD2()
+            if( d2 < minD2 ) minD2 = d2
             g.lineTo( p.x, p.y )
         }
+        this.lastStemSpace = this.stemSpace
+        this.stemSpace = Math.sqrt(minD2)
         //var sp = this.pos.add(vp(pi,this.rad))// point where stem meets spiral
         //var end = va(this.basePos,sp,this.stemProgress/this.nStem)
         //g.moveTo( this.basePos.x, this.basePos.y )
