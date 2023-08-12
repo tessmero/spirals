@@ -13,12 +13,13 @@ function draw(fps, t) {
 
     global.balloons.forEach( b => b.draw(ctx) )
 
-    //debug
-    //trace always-visible circle
-    //ctx.strokeStyle = 'yellow'
-    //ctx.beginPath()
-    //ctx.arc( .5, .5, .2, 0, twopi )
-    //ctx.stroke()
+    if( false ){
+        //debug
+        // draw screen corners
+        var r = .1
+        ctx.fillStyle = 'red'
+        global.screenCorners.forEach(c => ctx.fillRect( c.x-r, c.y-r, 2*r, 2*r ))
+    }
 
 
     //ctx.clearRect( 0, 0, canvas.width, canvas.height )

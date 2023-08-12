@@ -4,7 +4,36 @@
 function update(dt) {    
     fitToContainer()
     global.t += dt
+    
+    //spawn new Ballons
+    if( (global.balloons.length < global.nBalloons) && (global.spawnCountdown<=0) ){
+        global.spawnCountdown = randRange( ...global.spawnDelay )
+        var pos = v( randRange(.4,.6), randRange(.4,.6) )
+        var d = pos.sub(global.centerPos)
+        
+        if( true ){
+            // nearest point on edge of screen
+            var np = ( Math.abs(d.x) > Math.abs(d.y) ) ?
+                      v(  global.screenCorners[(d.x<0) ? 0 : 2].x, pos.y)
+                    : v(  pos.x, global.screenCorners[(d.y<0) ? 0 : 2].y)
+            
+            // push away from center
+            var a = np.sub(global.centerPos).getAngle()
+            var basePos = np.add(vp(a,.2))
+        } else {
+            
+            // point below screen
+            var basePos = v(global.centerPos.x,1.5)
+        }
+        
+        global.balloons.push( new Balloon( basePos, pos ) )
+    } else {
+        global.spawnCountdown -= dt
+    }
+    
+    // update balloons
     global.balloons.forEach( b => b.update(dt) )
+    
 }
 
 
@@ -21,12 +50,16 @@ function fitToContainer(){
       cvs.width  = cvs.offsetWidth;
       cvs.height = cvs.offsetHeight;
         
-        var padding = 10; // (extra zoom IN) thickness of pixels CUT OFF around edges
+        var padding = 0; // (extra zoom IN) thickness of pixels CUT OFF around edges
         var dimension = Math.max(cvs.width, cvs.height) + padding*2;
         global.canvasScale = dimension;
         global.canvasOffsetX = (cvs.width - dimension) / 2;
         global.canvasOffsetY = (cvs.height - dimension) / 2;
     global.ctx.setTransform(global.canvasScale, 0, 0, 
         global.canvasScale, global.canvasOffsetX, global.canvasOffsetY);
+        
+        var xr = -global.canvasOffsetX / global.canvasScale
+        var yr = -global.canvasOffsetY / global.canvasScale
+        global.screenCorners = [v(xr,yr),v(1-xr,yr),v(1-xr,1-yr),v(xr,1-yr)]
     }
 }

@@ -17,11 +17,21 @@ const global = {
     canvasOffsetY: 0,
     canvasScale: 0,
     centerPos: v(.5,.5),
+    screenCorners: null, 
     
     // mouse
     canvasMousePos: v(0,0),     //pixels
     mousePos: v(0,0),           //virtual units
     
     // objects
+    nBalloons: 30,
+    spawnCountdown: 0,
+    spawnDelay: [2000,8000],
     balloons: [],
+    
+    // balloon collision settings
+    nCollisionChecks: 10, // checks per balloon per update
+    
+    // debug
+    debugBezierPoints: true,
 }

@@ -10,13 +10,6 @@ function init() {
     global.canvas = cvs
     global.ctx = cvs.getContext("2d");
     
-    var nBalloons = 20
-    for( var i = 0 ; i < nBalloons ; i++ ){
-        var basePos = v(.5,2)
-        var pos = v( randRange(.4,.6), randRange(.4,.6) )
-        global.balloons.push( new Balloon( basePos, pos ) )
-    }
-    
     resetRand()
     requestAnimationFrame(gameLoop);
 }

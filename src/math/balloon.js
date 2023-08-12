@@ -40,6 +40,9 @@ class Balloon{
         
         // scale of outward force on other balloons
         this.fmul = Math.pow(this.rad,2)
+        
+        // counter for collision optimization
+        this.collisionCheckOffsetIndex = 0
     }
     
     update(dt){
@@ -64,24 +67,33 @@ class Balloon{
         }
         
         // get pushed by other balloons
-        global.balloons.forEach( o => {
+        for( var i = 0 ; i < global.nCollisionChecks ; i++ ){
+            
+            // cycle over balloons
+            this.collisionCheckOffsetIndex = (this.collisionCheckOffsetIndex+1)%global.balloons.length
+            var o = global.balloons[this.collisionCheckOffsetIndex]
+            if( !o.stemComplete ) continue // skip balloon in stem growth animation
             var d = o.pos.sub(this.pos)
             var d2 = d.getD2()
-            if(d2 == 0) return // skip self
+            if(d2 == 0) continue // skip self
             var md2 = Math.pow(o.rad + this.rad,2)
-            if( d2 > md2 ) return // skip distant balloon
+            var fm = .2
+            if( d2 > md2*(1+fm) ) continue // skip distant balloon
             
-            // accel self away from intersecting balloon
+            // accel self away from nearby balloon
             var angle = d.getAngle()
-            var f = 2e-6*dt/d2*this.fmul
+            var f = 2e-7*dt/d2*this.fmul*Math.max(8*pi,o.angle) * (d2<md2 ? 1 : .5*(1-(d2-md2)/(fm)) )
             this.vel = this.vel.sub(vp(angle,f))
-        })
+        }
         
-        // tend towards center of screen
-        var g = 1e-8
-        var angle = this.pos.sub(global.centerPos).getAngle()
-        var f = vp( angle, g*dt  )
-        this.vel = this.vel.sub( f )
+        // tend towards visible on-screen region
+        var d = this.pos.sub(global.centerPos)
+        if( (this.pos.x-this.rad < global.screenCorners[0].x) || (this.pos.x+this.rad > global.screenCorners[2].x) || (this.posy-this.rad < global.screenCorners[0].y) || (this.pos.y+this.rad > global.screenCorners[2].y)  ){
+            var g = 1e-7
+            var angle = this.pos.sub(global.centerPos).getAngle()
+            var f = vp( angle, g*dt  )
+            this.vel = this.vel.sub( f )
+        }
         
         if( this.spiralComplete ) return
         
@@ -124,7 +136,7 @@ class Balloon{
         
         // get stem shape
         var sp = this.getStemPoints()
-        if( false ){
+        if( global.debugBezierPoints ){
             // debug 
             // draw bezier points
             g.fillStyle = 'red'
@@ -195,22 +207,21 @@ class Balloon{
     getStemPoints(){
         var result = []
         
+        // point where stem meets spiral
+        var end = this.pos.add(vp(this.angleOffset,this.rad))
+        
         // first point is base
         result.push( this.basePos )
         
         // random point 
-        var maxy = this.basePos.y
-        var miny = this.pos.y-+this.rad
-        var r = maxy-miny
-        if ( true || (r > 0) ){
-            result.push( v(
-                    this.basePos.x + randRange(-r,r),
-                    randRange(miny,maxy)))
+        for( var r = randRange(.7,.8) ; r < .9 ; r += randRange(.05,.2) ){
+            var d = vp( end.sub(this.basePos).getAngle()+pio2, randRange(-.1,1) )
+            var c = va( this.basePos, end, r )
+            result.push( c.add(d) )
         }
         
         // last two points end up tangent to the spiral
         var a = this.pos.add(vp(this.angleOffset+.5,this.rad))
-        var end = this.pos.add(vp(this.angleOffset,this.rad))
         var angle = end.sub(a).getAngle()-.1
         result.push( end.add( vp(angle,.1) ) )
         result.push( end )
