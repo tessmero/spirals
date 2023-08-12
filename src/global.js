@@ -16,6 +16,7 @@ const global = {
     canvasOffsetX: 0,
     canvasOffsetY: 0,
     canvasScale: 0,
+    centerPos: v(.5,.5),
     
     // mouse
     canvasMousePos: v(0,0),     //pixels

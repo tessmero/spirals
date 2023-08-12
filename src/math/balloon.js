@@ -4,36 +4,42 @@ class Balloon{
         // base of setm
         this.basePos = basePos
         
-        // spiral
+        // circle containing spiral (for physics)
         this.pos = pos
         this.vel = v(0,0)
-        this.angleOffset = randRange(0,twopi)
+        this.angleOffset = randRange(pio2,twopi-pio2)
+        this.startAngle = this.angleOffset
         this.avel = 0
         
-        // radius of sprial
-        this.rad = randRange(.05,.1)
+        // archimedean spiral shape
+        this.rad = randRange(.02,.1)
+        this.spiralClockwise = (rand() > .5)
+        this.a = this.rad 
+        this.b = this.rad * randRange( 1e-2, 3e-2 )
         
         // settings for twisting behavior
         // (regulate distance between stem and spiral)
         this.stemSpace = null
         this.lastStemSpace = null
-        this.targetStemSpace = this.rad*.9
+        this.targetStemSpace = this.rad*.95
         this.targetStemSpaceMargin = this.rad*.05
         
-        // spiral shape
-        this.a = this.rad
-        this.b = randRange( 3e-3, 6e-3 )
-        this.stepDelay = 20
-        this.stepLen = .005
-        this.spiral = []
         
+        // stem growth animation
         this.stemProgress = 0 // number of line segs in stem
         this.nStem = 100 // max number of line segs in stem
         this.stemComplete = false
         this.spiralComplete = false
-        
         this.angle = pi
+        
+        // sprial growth animation
         this.t = 0
+        this.stepDelay = 20
+        this.stepLen = 1e-1
+        this.spiral = []
+        
+        // scale of outward force on other balloons
+        this.fmul = Math.pow(this.rad,2)
     }
     
     update(dt){
@@ -49,7 +55,7 @@ class Balloon{
         
         // twist towards natural angle
         if( (this.stemComplete) && (this.stemSpace!=null) && (this.lastStemSpace!=null) ){
-            console.log( this.stemSpace.toFixed(3),   this.targetStemSpace.toFixed(3) )
+            //console.log( this.stemSpace.toFixed(3),   this.targetStemSpace.toFixed(3) )
             var d = this.stemSpace - this.targetStemSpace
             if( Math.abs(d) > this.targetStemSpaceMargin ){
                 this.avel += 4e-4*dt*d
@@ -57,23 +63,29 @@ class Balloon{
             }
         }
         
-        
-        // avoid other balloons
+        // get pushed by other balloons
         global.balloons.forEach( o => {
             var d = o.pos.sub(this.pos)
             var d2 = d.getD2()
             if(d2 == 0) return // skip self
             var md2 = Math.pow(o.rad + this.rad,2)
-            if( d2 > md2 ) return // skip far-away balloon
+            if( d2 > md2 ) return // skip distant balloon
             
-            // accel away
+            // accel self away from intersecting balloon
             var angle = d.getAngle()
-            var f = 1e-8*dt/d2
+            var f = 2e-6*dt/d2*this.fmul
             this.vel = this.vel.sub(vp(angle,f))
         })
         
-        // grow if necessary
+        // tend towards center of screen
+        var g = 1e-8
+        var angle = this.pos.sub(global.centerPos).getAngle()
+        var f = vp( angle, g*dt  )
+        this.vel = this.vel.sub( f )
+        
         if( this.spiralComplete ) return
+        
+        // animate stem or spiral growth
         while( this.t > this.stepDelay ){
             
             if( !this.stemComplete ){
@@ -100,7 +112,7 @@ class Balloon{
             return
         }
         
-        this.angle += 2e-1*this.rad / r
+        this.angle += this.stepLen*this.rad / r
         
         //var next = vp( this.angle,  r )
         var next = [this.angle,r]
@@ -110,10 +122,11 @@ class Balloon{
     
     draw(g){
         
-        // debug 
-        // draw bezier points
+        // get stem shape
         var sp = this.getStemPoints()
         if( false ){
+            // debug 
+            // draw bezier points
             g.fillStyle = 'red'
             sp.forEach( p => g.fillRect(p.x,p.y,.003,.003) )
         }
@@ -149,6 +162,32 @@ class Balloon{
             }
         }
         g.stroke()
+        
+        
+        // debug 
+        // draw starting angle
+        if( false ) {
+            g.font = ".02px Arial";
+            g.textAlign = "center";
+            g.textBaseline = 'middle';
+            g.fillStyle = "black";
+            var x = .4
+            var y = .4
+            g.fillText(this.startAngle.toFixed(3), this.pos.x, this.pos.y );
+        }
+        
+        // debug 
+        // draw twisting details
+        if( false ) {
+            g.font = ".02px Arial";
+            g.textAlign = "center";
+            g.textBaseline = 'middle';
+            g.fillStyle = "black";
+            var x = .4
+            var y = .4
+            g.fillText(this.stemSpace.toFixed(3), this.pos.x, this.pos.y-.01 );
+            g.fillText(this.targetStemSpace.toFixed(3), this.pos.x, this.pos.y+.01 );
+        }
     }
     
     // used in draw()
@@ -163,7 +202,7 @@ class Balloon{
         var maxy = this.basePos.y
         var miny = this.pos.y-+this.rad
         var r = maxy-miny
-        if ( r > 0 ){
+        if ( true || (r > 0) ){
             result.push( v(
                     this.basePos.x + randRange(-r,r),
                     randRange(miny,maxy)))
