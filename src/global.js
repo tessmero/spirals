@@ -24,7 +24,7 @@ const global = {
     mousePos: v(0,0),           //virtual units
     
     // objects
-    nBalloons: 30,
+    nBalloons: 40,
     spawnCountdown: 0,
     spawnDelay: [2000,8000],
     balloons: [],
@@ -33,5 +33,5 @@ const global = {
     nCollisionChecks: 10, // checks per balloon per update
     
     // debug
-    debugBezierPoints: true,
+    debugBezierPoints: false,
 }

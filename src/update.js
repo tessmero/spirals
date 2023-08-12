@@ -34,6 +34,17 @@ function update(dt) {
     // update balloons
     global.balloons.forEach( b => b.update(dt) )
     
+    // remove OOB baloons
+    global.balloons = global.balloons.filter( b => {
+        var result = (b.pos.x>-1) && (b.pos.x<2) 
+                  && (b.pos.y>-1) && (b.pos.y<2)
+        if( !result ){
+            console.log("remove oob ball")
+            console.log( global.balloons.length )
+        }
+        return result
+    })
+    
 }
 
 
