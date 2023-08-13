@@ -24,9 +24,9 @@ const global = {
     mousePos: v(0,0),           //virtual units
     
     // objects
-    nBalloons: 20,
+    nBalloons: 40,
     spawnCountdown: 0,
-    spawnDelay: [1000,5000],
+    spawnDelay: [500,2000],
     balloons: [],
     
     // balloon collision settings

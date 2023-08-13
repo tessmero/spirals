@@ -91,8 +91,8 @@ class Balloon{
         
         // tend towards visible on-screen region
         var d = this.pos.sub(global.centerPos)
-        if( (this.pos.x-this.rad < global.screenCorners[0].x) || (this.pos.x+this.rad > global.screenCorners[2].x) || (this.posy-this.rad < global.screenCorners[0].y) || (this.pos.y+this.rad > global.screenCorners[2].y)  ){
-            var g = 1e-7
+        if( (this.pos.x-this.rad < global.screenCorners[0].x) || (this.pos.x+this.rad > global.screenCorners[2].x) || (this.pos.y-this.rad < global.screenCorners[0].y) || (this.pos.y+this.rad > global.screenCorners[2].y)  ){
+            var g = 1e-6
             var angle = this.pos.sub(global.centerPos).getAngle()
             var f = vp( angle, g*dt  )
             this.vel = this.vel.sub( f )
