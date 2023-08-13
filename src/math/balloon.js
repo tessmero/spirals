@@ -15,11 +15,13 @@ class Balloon{
         // archimedean spiral shape
         this.rad = randRange(.02,.1)
         this.a = this.rad 
-        this.b = Math.max( 1e-3, this.rad * randRange( 1e-2, 3e-2 ) )
+        this.b = Math.max( 1e-3, this.rad * randRange( 1e-2, 8e-2 ) )
         
         // settings for twisting behavior
         // (regulate distance between stem and spiral)
-        this.targetAngle = this.angleOffset+randRange(-.2,.8)*(this.clockwise?1:-1)
+        this.targetAngle = this.angleOffset
+                +(rand()>.5?randRange(-.3,-.2):randRange(.2,.8))
+                *(this.clockwise?1:-1)
         this.targetAngleMargin = .1
         
         
@@ -28,6 +30,9 @@ class Balloon{
         this.nStem = 100 // max number of line segs in stem
         this.stemComplete = false
         this.spiralComplete = false
+        this.stemRetracting = false
+        this.stemRetraction = 0 // radius of hidden portion of stem
+        this.stemRetractionOffset = randRange(75,95) // center of hidden portion of stem
         this.angle = pi
         
         // sprial growth animation
@@ -52,10 +57,10 @@ class Balloon{
         
         // apply friction
         this.vel  = this.vel.mul(1-(3e-2*dt)) 
-        this.avel *= 1-(3e-4*dt)
+        if( ! this.stemRetracting ) this.avel *= 1-(3e-4*dt)
         
         // twist towards target angle
-        if( this.stemComplete ){
+        if( this.stemComplete && (!this.stemRetracting) ){
             //console.log( this.stemSpace.toFixed(3),   this.targetStemSpace.toFixed(3) )
             var d = this.targetAngle - this.angleOffset
             if( Math.abs(d) > this.targetAngleMargin ){
@@ -93,15 +98,17 @@ class Balloon{
             this.vel = this.vel.sub( f )
         }
         
-        if( this.spiralComplete ) return
-        
         // animate stem or spiral growth
         while( this.t > this.stepDelay ){
             
             if( !this.stemComplete ){
                 this.growStemOneStep()
-            } else {
+            } else if (!this.spiralComplete) {
                 this.growSpiralOneStep()
+            }
+            
+            if( this.stemRetracting ) {
+                this.retractStemOneStep()
             }
             this.t -= this.stepDelay
         }
@@ -116,9 +123,12 @@ class Balloon{
     growSpiralOneStep(){
         var r = this.a - (this.angle-pi)*this.b
         
-        if( r < this.b ){
-            this.spiralComplete = true
-            return
+        if( r < this.b*4 ){
+            this.stemRetracting = true
+            if( r < this.b ){
+                this.spiralComplete = true
+                return
+            }        
         }
         
         this.angle +=  this.stepLen*this.rad / r
@@ -127,6 +137,10 @@ class Balloon{
         var next = [this.angle,r]
         
         this.spiral.push( next )
+    }
+    
+    retractStemOneStep(){
+        this.stemRetraction += 1
     }
     
     draw(g){
@@ -153,17 +167,32 @@ class Balloon{
         //g.arc( this.pos.x, this.pos.y, this.rad, 0, twopi )
         
         // draw stem
-        if( (!this.spiralComplete) || Math.abs(this.avel)<1e-1 ){ //unless spinning a lot
-            g.moveTo( this.basePos.x, this.basePos.y )
+        g.moveTo( this.basePos.x, this.basePos.y )
+        if( this.stemRetraction == 0 ){
             for( var i = 0 ; i < this.stemProgress ; i++ ){
                 var p = bezier(sp,i/this.nStem)
                 g.lineTo( p.x, p.y )
             }
+            
+        } else {
+            
+            // draw stem with a portion missing in the middle
+            var hiddenStart = this.stemRetractionOffset-this.stemRetraction 
+            var hiddenEnd = this.stemRetractionOffset+this.stemRetraction 
+            for( var i = 0 ; (i<this.stemProgress) && (i<hiddenStart) ; i++ ){
+                var p = bezier(sp,i/this.nStem)
+                g.lineTo( p.x, p.y )
+            }
+            var p = bezier(sp,hiddenEnd/this.nStem)
+            g.moveTo( p.x, p.y )
+            for( var i = hiddenEnd ; (i<this.stemProgress) && (i<this.nStem) ; i++ ){
+                var p = bezier(sp,i/this.nStem)
+                g.lineTo( p.x, p.y )
+            }
+            if( hiddenEnd >= this.nStem ){
+                g.moveTo( ...this.getSpiralPos(0) )
+            }
         }
-        //var sp = this.pos.add(vp(pi,this.rad))// point where stem meets spiral
-        //var end = va(this.basePos,sp,this.stemProgress/this.nStem)
-        //g.moveTo( this.basePos.x, this.basePos.y )
-        //g.lineTo( end.x, end.y )
         
         // draw internal spiral
         if( this.spiral.length > 0 ){
@@ -198,7 +227,7 @@ class Balloon{
         
         // debug 
         // draw twisting details
-        if( true ) {
+        if( false ) {
             g.font = ".02px Arial";
             g.textAlign = "center";
             g.textBaseline = 'middle';
