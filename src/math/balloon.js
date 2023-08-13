@@ -85,14 +85,14 @@ class Balloon{
             
             // accel self away from nearby balloon
             var angle = d.getAngle()
-            var f = 2e-7*dt/d2*this.fmul*Math.max(8*pi,o.angle) * (d2<md2 ? 1 : .5*(1-(d2-md2)/(fm)) )
+            var f = 1e-7*dt/d2*this.fmul*Math.max(8*pi,o.angle) * (d2<md2 ? 1 : .5*(1-(d2-md2)/(fm)) )
             this.vel = this.vel.sub(vp(angle,f))
         }
         
         // tend towards visible on-screen region
         var d = this.pos.sub(global.centerPos)
         if( (this.pos.x-this.rad < global.screenCorners[0].x) || (this.pos.x+this.rad > global.screenCorners[2].x) || (this.pos.y-this.rad < global.screenCorners[0].y) || (this.pos.y+this.rad > global.screenCorners[2].y)  ){
-            var g = 1e-6
+            var g = 1e-7
             var angle = this.pos.sub(global.centerPos).getAngle()
             var f = vp( angle, g*dt  )
             this.vel = this.vel.sub( f )
@@ -167,8 +167,8 @@ class Balloon{
         //g.arc( this.pos.x, this.pos.y, this.rad, 0, twopi )
         
         // draw stem
-        g.moveTo( this.basePos.x, this.basePos.y )
         if( this.stemRetraction == 0 ){
+            g.moveTo( this.basePos.x, this.basePos.y )
             for( var i = 0 ; i < this.stemProgress ; i++ ){
                 var p = bezier(sp,i/this.nStem)
                 g.lineTo( p.x, p.y )
@@ -179,6 +179,7 @@ class Balloon{
             // draw stem with a portion missing in the middle
             var hiddenStart = this.stemRetractionOffset-this.stemRetraction 
             var hiddenEnd = this.stemRetractionOffset+this.stemRetraction 
+            g.moveTo( this.basePos.x, this.basePos.y )
             for( var i = 0 ; (i<this.stemProgress) && (i<hiddenStart) ; i++ ){
                 var p = bezier(sp,i/this.nStem)
                 g.lineTo( p.x, p.y )
@@ -231,11 +232,24 @@ class Balloon{
             g.font = ".02px Arial";
             g.textAlign = "center";
             g.textBaseline = 'middle';
-            g.fillStyle = "black";
+            g.fillStyle = "red";
             var x = .4
             var y = .4
             g.fillText(this.angleOffset.toFixed(3), this.pos.x, this.pos.y-.01 );
             g.fillText(this.targetAngle.toFixed(3), this.pos.x, this.pos.y+.01 );
+        }
+        
+        // debug 
+        // draw retraction info
+        if( false ) {
+            g.font = ".02px Arial";
+            g.textAlign = "center";
+            g.textBaseline = 'middle';
+            g.fillStyle = "red";
+            var x = .4
+            var y = .4
+            g.fillText(this.stemRetracting, this.pos.x, this.pos.y-.01 );
+            g.fillText(this.stemRetraction, this.pos.x, this.pos.y+.01 );
         }
     }
     

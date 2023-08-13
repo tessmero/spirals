@@ -5,6 +5,14 @@ function update(dt) {
     fitToContainer()
     global.t += dt
     
+    // reset periodically
+    global.resetCountdown -= dt
+    if( global.resetCountdown < 0 ){
+        global.balloons = []
+        global.spawnCountdown = 0
+        global.resetCountdown = global.resetDelay
+    }
+    
     //spawn new Ballons
     if( (global.balloons.length < global.nBalloons) && (global.spawnCountdown<=0) ){
         global.spawnCountdown = randRange( ...global.spawnDelay )

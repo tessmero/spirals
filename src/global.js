@@ -4,6 +4,9 @@ const global = {
     
     // total time elapsed in milliseconds
     t: 0,
+    resetCountdown: 30000,
+    resetDelay: 30000,
+    
     
     // graphics context
     canvas: null,
@@ -26,7 +29,7 @@ const global = {
     // objects
     nBalloons: 40,
     spawnCountdown: 0,
-    spawnDelay: [500,2000],
+    spawnDelay: [100,1000],
     balloons: [],
     
     // balloon collision settings
